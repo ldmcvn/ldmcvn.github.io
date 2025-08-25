@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="content-language" content="vi">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="author" content="Luudan Matcuoi">
+    <link rel="shortcut icon" href="/data/flavicon.png">
+    <link defer rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://sdk.userbase.com/2/userbase.js"></script>
+    
+    <style type="text/css">
+        #sidebar-wrapper {
+            background-color: #ffcfdf;
+            margin-left: -9rem;
+            transition: margin .25s ease-out;
+        }
+        
+        #sidebar-wrapper .list-group {
+            width: 9rem;
+        }
+        
+        #wrapper.toggled #sidebar-wrapper {
+            margin-left: 0;
+        }
+        
+        .navbar {
+            background-color: #a5dee5;
+        }
+        
+        @media (min-width: 768px) {
+            #sidebar-wrapper {
+                margin-left: 0;
+            }
+            #wrapper.toggled #sidebar-wrapper {
+                margin-left: -9rem;
+            }
+        }
+        
+        a {
+            text-decoration: none !important;
+        }
+        
+        .list-group-item {
+            background-color: #ffcfdf;
+            border: 1.5px solid #997C85;
+        }
+        
+        .list-group-item:hover {
+            background-color: #e0f9b5;
+        }
+        
+        .footer {
+            padding: 0.4em 0em;
+            background-color: #494949;
+            text-align: center;
+            color: white;
+            box-sizing: border-box;
+            font-style: italic;
+        }
+        
+        @font-face {
+            font-family: 'icomoon';
+            font-display: swap;
+            src: url('/data/icomoon.eot');
+            src: url('/data/icomoon.eot') format('embedded-opentype'),
+                 url('/data/icomoon.ttf') format('truetype'),
+                 url('/data/icomoon.woff') format('woff'),
+                 url('/data/icomoon.svg') format('svg');
+            font-weight: 400;
+            font-style: normal;
+            font-display: block;
+        }
+        
+        [class*=" fa-"], [class^=fa-] {
+            font-family: icomoon !important;
+            speak: none;
+            font-style: normal;
+            font-weight: 400;
+            font-variant: normal;
+            text-transform: none;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .fa-plus-circle:before { content: "\e900"; }
+        .fa-th-large:before { content: "\e901"; }
+        .fa-user-times:before { content: "\e902"; }
+        .fa-address-card:before { content: "\e903"; }
+        .fa-bars:before { content: "\e904"; }
+        .fa-home:before { content: "\e905"; }
+        .fa-list:before { content: "\e906"; }
+        .fa-key:before { content: "\e907"; }
+        .fa-book:before { content: "\e91f"; }
+        .fa-folder:before { content: "\e92f"; }
+        .fa-address-book:before { content: "\e944"; }
+        
+        textarea {
+            width: 100%;
+            outline: none;
+            overflow: hidden;
+        }
+        
+        div#body.darkside {
+            background-color: #303030 !important;
+        }
+        
+        textarea#newone.darkside {
+            background-color: #474747 !important;
+            color: #fff;
+        }
+        
+        div.card.darkside {
+            background-color: #474747 !important;
+            color: #fff;
+        }
+        
+        pre {
+            font-family: OKkhong;
+            font-size: 120%;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            white-space: -moz-pre-wrap;
+            white-space: -pre-wrap;
+            white-space: -o-pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .auth-form {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        #loading-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            z-index: 9999;
+        }
+    </style>
+
+    <title>MONOSA Diary</title>
+</head>
+
+<body>
+    <!-- Loading View -->
+    <div id="loading-view">
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Authentication View -->
+    <div id="auth-view" style="display: none;">
+        <div class="d-flex flex-column" style="min-height: 100vh; background-color: #fefdca;">
+            <nav class="navbar">
+                <div class="lead mx-auto" style="font-size: 1.75rem; letter-spacing: 10px;">
+                    <a href="javascript:void(0)">MONOSA</a>
+                </div>
+            </nav>
+            
+            <div class="container-fluid flex-grow-1 d-flex justify-content-center align-items-center">
+                <div class="row w-100">
+                    <!-- Login Form -->
+<!--                     <div class="col-md-6">
+                        <div class="auth-form">
+                            <h2 class="text-center mb-4">Login</h2>
+                            <form id="login-form">
+                                <div class="mb-3">
+                                    <input id="login-username" type="text" class="form-control" required placeholder="Username">
+                                </div>
+                                <div class="mb-3">
+                                    <input id="login-password" type="password" class="form-control" required placeholder="Password">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                            </form>
+                            <div id="login-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                        </div>
+                    </div> -->
+                    
+                    <!-- Signup Form -->
+                    <div class="col-md-6">
+                        <div class="auth-form">
+                            <h2 id="signup-login-title" class="text-center mb-4">Login</h2>
+
+                            <form id="signup-form" style="display:none">
+                                <div class="mb-3">
+                                    <input id="signup-username" type="text" class="form-control" required placeholder="Username">
+                                </div>
+                                <div class="mb-3">
+                                    <input id="signup-password" type="password" class="form-control" required placeholder="Password">
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Create Account</button>
+                            </form>
+
+                            <form id="login-form">
+                                <div class="mb-3">
+                                    <input id="login-username" type="text" class="form-control" required placeholder="Username">
+                                </div>
+                                <div class="mb-3">
+                                    <input id="login-password" type="password" class="form-control" required placeholder="Password">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                            </form>
+                            <br>
+                            <a href="javascript:void(0)" class="btn btn-secondary w-60" mode="login" onclick="change_mode(this)">
+                                You want to create account?
+                            </a>
+                            <div id="info-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App View -->
+    <div id="app-view" style="display: none;">
+        <div class="d-flex flex-column" style="min-height: 100vh">
+            <nav class="navbar">
+                <button class="btn btn-secondary py-2" id="menu-toggle" aria-label="toggled-sidebar">
+                    <i class="fa-address-card"></i> Hello <span id="username-display"></span>
+                </button>
+                <div class="lead mx-auto" style="font-size: 1.75rem; letter-spacing: 10px;">
+                    <a href="javascript:void(0)">MONOSA</a>
+                </div>
+            </nav>
+            
+            <div class="d-flex flex-grow-1" id="wrapper">
+                <div id="sidebar-wrapper">
+                    <div class="list-group list-group-flush">
+<!--                         <a href="javascript:void(0)" class="list-group-item list-group-item-action" onclick="showHome()">
+                            <i class="fa-home"></i> Home
+                        </a> -->
+                        <a href="javascript:void(0)" class="list-group-item list-group-item-action" onclick="showDiary()">
+                            <i class="fa-address-book"></i> Diary
+                        </a>
+                        <a href="javascript:void(0)" id="logout-button" class="list-group-item list-group-item-action">
+                            Logout
+                        </a>
+                        <div class="list-group-item-action"></div>
+                    </div>
+                </div>
+                
+                <div id="body" class="flex-grow-1" style="background-color: #fefdca">
+                    <!-- Home Section -->
+                    <div id="home-section" class="px-2">
+                        <div class="container mt-4">
+                            <h1>Hello Worlds</h1>
+                            <!-- <p class="lead">Your personal space to record thoughts, memories, and daily experiences.</p> -->
+<!--                             <div class="row">
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Your Digital Diary</h5>
+                                            <p class="card-text">Keep track of your daily thoughts and experiences in a secure, encrypted environment. Your entries are private and synchronized across all your devices.</p>
+                                            <button class="btn btn-primary" onclick="showDiary()">Start Writing</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                    </div>
+
+                    <!-- Diary Section -->
+                    <div id="diary-section" class="px-2" style="display: none;">
+                        <div id="db-loading" class="text-center mt-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading diaries...</span>
+                            </div>
+                            <div class="mt-2">Loading your diaries...</div>
+                        </div>
+                        <div id="db-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                        
+                        <div id="diary-content" style="display: none;">
+                            <p class="lead mt-3">&gt; New one ??? :)</p>
+                            <textarea id="newone" class="border text-left form-control" placeholder="Dear diary" style="height: 130px;"></textarea>
+                            <div class="col-md-4 btn"></div>
+                            <button id="add-diary-btn" class="col-md-4 btn btn-primary mt-3" type="button">Send</button>
+                            <div id="add-diary-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                            
+                            <hr>
+                            <div id="diaries-list">
+                                <!-- Diary entries will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Replace with your actual Userbase App ID
+        const APP_ID = '3524161b-599a-4758-a7a5-b39b763cbb91'; // You need to replace this with your actual App ID
+        
+        let currentUser = null;
+
+        // Initialize Userbase
+        userbase.init({ appId: APP_ID })
+            .then((session) => {
+                if (session.user) {
+                    currentUser = session.user;
+                    showApp(session.user.username);
+                } else {
+                    showAuth();
+                }
+            })
+            .catch(() => showAuth())
+            .finally(() => document.getElementById('loading-view').style.display = 'none');
+
+        // Authentication functions
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            userbase.signIn({ username, password, rememberMe: 'local' })
+                .then((user) => {
+                    currentUser = user;
+                    showApp(user.username);
+                })
+                .catch((e) => {
+                    const errorDiv = document.getElementById('info-error');
+                    errorDiv.textContent = e.message || e;
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function handleSignUp(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            
+            userbase.signUp({ username, password, rememberMe: 'local' })
+                .then((user) => {
+                    currentUser = user;
+                    showApp(user.username);
+                })
+                .catch((e) => {
+                    const errorDiv = document.getElementById('info-error');
+                    errorDiv.textContent = e.message || e;
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function handleLogout() {
+            userbase.signOut()
+                .then(() => {
+                    currentUser = null;
+                    showAuth();
+                })
+                .catch((e) => console.error('Logout error:', e));
+        }
+
+        // View management functions
+        function showAuth() {
+            document.getElementById('auth-view').style.display = 'block';
+            document.getElementById('app-view').style.display = 'none';
+            
+            // Clear form fields and errors
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('info-error').style.display = 'none';
+            document.getElementById('signup-username').value = '';
+            document.getElementById('signup-password').value = '';
+            document.getElementById('info-error').style.display = 'none';
+        }
+
+
+        function change_mode(e) {
+            if (e.getAttribute("mode") === "login"){
+                document.getElementById('signup-form').style.display = 'block';
+                document.getElementById('login-form').style.display = 'none';
+                e.setAttribute('mode','signup')
+                document.getElementById('signup-login-title').innerHTML = 'Create Account';
+                e.innerHTML = "You want to login?"
+            } else {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('signup-form').style.display = 'none';
+                e.setAttribute('mode','login')
+                document.getElementById('signup-login-title').innerHTML = 'Login';
+                e.innerHTML = "You want to create account?"
+            }
+        }
+
+
+        function showApp(username) {
+            document.getElementById('auth-view').style.display = 'none';
+            document.getElementById('app-view').style.display = 'block';
+            document.getElementById('username-display').textContent = username;
+            showDiary();
+        }
+
+        // function showHome() {
+        //     document.getElementById('home-section').style.display = 'block';
+        //     document.getElementById('diary-section').style.display = 'none';
+        // }
+
+        function showDiary() {
+            document.getElementById('home-section').style.display = 'none';
+            document.getElementById('diary-section').style.display = 'block';
+            
+            // Initialize diary database if not already done
+            if (!window.diaryDbInitialized) {
+                initDiaryDatabase();
+                window.diaryDbInitialized = true;
+            }
+        }
+
+        // Diary database functions
+        function initDiaryDatabase() {
+            document.getElementById('db-loading').style.display = 'block';
+            document.getElementById('diary-content').style.display = 'none';
+            document.getElementById('db-error').style.display = 'none';
+            
+            userbase.openDatabase({ databaseName: 'diary-entries', changeHandler: handleDiaryChanges })
+                .then(() => {
+                    document.getElementById('db-loading').style.display = 'none';
+                    document.getElementById('diary-content').style.display = 'block';
+                })
+                .catch((e) => {
+                    document.getElementById('db-loading').style.display = 'none';
+                    const errorDiv = document.getElementById('db-error');
+                    errorDiv.textContent = 'Failed to load diary: ' + (e.message || e);
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function handleDiaryChanges(items) {
+            const diariesList = document.getElementById('diaries-list');
+            
+            if (items.length === 0) {
+                diariesList.innerHTML = '<p class="text-muted">No diary entries yet. Start writing!</p>';
+                return;
+            }
+            
+            // Sort items by creation date (newest first)
+            items.sort((a, b) => new Date(b.item.timestamp) - new Date(a.item.timestamp));
+            
+            diariesList.innerHTML = '';
+            
+            items.forEach(item => {
+                const diaryEntry = item.item;
+                const diaryDiv = document.createElement('div');
+                diaryDiv.className = 'card mb-3';
+                
+                const timestamp = new Date(diaryEntry.timestamp).toLocaleString('vi-VN');
+                
+                diaryDiv.innerHTML = `
+                    <div class="card-header p-0 lead" style="cursor: pointer;" onclick="toggleDiaryEntry('${item.itemId}')">
+                        ${timestamp}
+                        <button class="btn btn-sm btn-outline-secondary float-end" onclick="event.stopPropagation(); deleteDiaryEntry('${item.itemId}')">
+                            delete
+                        </button> 
+                    </div>
+                    <div id="diary-${item.itemId}" class="collapse">
+                        <div class="card-body">
+                            <pre>${diaryEntry.content}</pre>
+                        </div>
+                    </div>
+                `;
+                
+                diariesList.appendChild(diaryDiv);
+            });
+        }
+
+        function addDiaryEntry() {
+            const content = document.getElementById('newone').value.trim();
+            
+            if (!content) {
+                return;
+            }
+            
+            const diaryEntry = {
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+            
+            userbase.insertItem({ databaseName: 'diary-entries', item: diaryEntry })
+                .then(() => {
+                    document.getElementById('newone').value = '';
+                    document.getElementById('add-diary-error').style.display = 'none';
+                })
+                .catch((e) => {
+                    const errorDiv = document.getElementById('add-diary-error');
+                    errorDiv.textContent = 'Failed to save diary entry: ' + (e.message || e);
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        function deleteDiaryEntry(itemId) {
+            if (confirm('Are you sure you want to delete this diary entry?')) {
+                userbase.deleteItem({ databaseName: 'diary-entries', itemId })
+                    .catch((e) => {
+                        alert('Failed to delete diary entry: ' + (e.message || e));
+                    });
+            }
+        }
+
+        function toggleDiaryEntry(itemId) {
+            const element = document.getElementById(`diary-${itemId}`);
+            if (element.classList.contains('show')) {
+                element.classList.remove('show');
+            } else {
+                element.classList.add('show');
+            }
+        }
+
+        // Menu toggle functionality
+        function toggleSidebar() {
+            document.getElementById('wrapper').classList.toggle('toggled');
+        }
+
+        // Auto-resize textarea
+        function writenewone() {
+            const textarea = document.getElementById('newone');
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Event listeners
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+        document.getElementById('signup-form').addEventListener('submit', handleSignUp);
+        document.getElementById('logout-button').addEventListener('click', handleLogout);
+        document.getElementById('add-diary-btn').addEventListener('click', addDiaryEntry);
+        document.getElementById('menu-toggle').addEventListener('click', toggleSidebar);
+        document.getElementById('newone').addEventListener('input', writenewone);
+        
+        // Allow Enter key to submit new diary entry (Ctrl+Enter)
+        document.getElementById('newone').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                addDiaryEntry();
+            }
+        });
+    </script>
+</body>
+</html>
