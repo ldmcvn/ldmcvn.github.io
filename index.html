@@ -183,6 +183,9 @@
 
                             <form id="signup-form" style="display:none">
                                 <div class="mb-3">
+                                    <input id="signup-username" type="text" class="form-control" required placeholder="Username">
+                                </div>
+                                <div class="mb-3">
                                     <input id="signup-email" type="email" class="form-control" required placeholder="Email">
                                 </div>
                                 <div class="mb-3">
@@ -200,11 +203,22 @@
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Sign In</button>
                             </form>
+
+                            <form id="reset-form" style="display:none">
+                                <div class="mb-3">
+                                    <input id="reset-email" type="email" class="form-control" required placeholder="Enter your email">
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100">Send Reset Email</button>
+                            </form>
                             <br>
                             <a href="javascript:void(0)" id="change-mode-button" class="btn btn-secondary w-100" mode="login">
-                                You want to create account?
+                                Don't have an account? Create one
+                            </a>
+                            <a href="javascript:void(0)" id="reset-mode-button" class="btn btn-link w-100 mt-2" style="text-decoration: underline !important;">
+                                Forgot your password?
                             </a>
                             <div id="info-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                            <div id="info-success" class="alert alert-success mt-3" style="display: none;"></div>
                         </div>
                     </div>
                 </div>
@@ -300,13 +314,40 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUser = user;
-                showApp(user.email); // Use email to display username
+                // Try to get username from Firestore, fallback to email
+                getUserProfile(user.uid).then(profile => {
+                    const displayName = profile?.username || user.email;
+                    showApp(displayName);
+                });
             } else {
                 currentUser = null;
                 showAuth();
             }
             document.getElementById('loading-view').style.display = 'none';
         });
+
+        // Get user profile from Firestore
+        async function getUserProfile(uid) {
+            try {
+                const userDoc = await db.collection('users').doc(uid).get();
+                return userDoc.exists ? userDoc.data() : null;
+            } catch (error) {
+                console.error('Error getting user profile:', error);
+                return null;
+            }
+        }
+
+        // Save user profile to Firestore
+        async function saveUserProfile(uid, username) {
+            try {
+                await db.collection('users').doc(uid).set({
+                    username: username,
+                    createdAt: new Date().toISOString()
+                }, { merge: true });
+            } catch (error) {
+                console.error('Error saving user profile:', error);
+            }
+        }
 
         // Authentication functions
         function handleLogin(e) {
@@ -319,19 +360,46 @@
                     const errorDiv = document.getElementById('info-error');
                     errorDiv.textContent = error.message;
                     errorDiv.style.display = 'block';
+                    document.getElementById('info-success').style.display = 'none';
                 });
         }
 
         function handleSignUp(e) {
             e.preventDefault();
+            const username = document.getElementById('signup-username').value;
             const email = document.getElementById('signup-email').value;
             const password = document.getElementById('signup-password').value;
             
             auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Save username to Firestore
+                    saveUserProfile(userCredential.user.uid, username);
+                })
                 .catch((error) => {
                     const errorDiv = document.getElementById('info-error');
                     errorDiv.textContent = error.message;
                     errorDiv.style.display = 'block';
+                    document.getElementById('info-success').style.display = 'none';
+                });
+        }
+
+        function handlePasswordReset(e) {
+            e.preventDefault();
+            const email = document.getElementById('reset-email').value;
+            
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    const successDiv = document.getElementById('info-success');
+                    successDiv.textContent = 'Password reset email sent! Check your inbox.';
+                    successDiv.style.display = 'block';
+                    document.getElementById('info-error').style.display = 'none';
+                    document.getElementById('reset-email').value = '';
+                })
+                .catch((error) => {
+                    const errorDiv = document.getElementById('info-error');
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                    document.getElementById('info-success').style.display = 'none';
                 });
         }
 
@@ -343,19 +411,51 @@
         }
 
         function change_mode(e) {
-            if (e.getAttribute("mode") === "login"){
+            const currentMode = document.getElementById('change-mode-button').getAttribute("mode");
+            
+            if (currentMode === "login"){
                 document.getElementById('signup-form').style.display = 'block';
                 document.getElementById('login-form').style.display = 'none';
-                e.setAttribute('mode','signup');
+                document.getElementById('reset-form').style.display = 'none';
+                document.getElementById('change-mode-button').setAttribute('mode','signup');
                 document.getElementById('signup-login-title').innerHTML = 'Create Account';
-                e.innerHTML = "Already have an account? Login";
-            } else {
+                document.getElementById('change-mode-button').innerHTML = "Already have an account? Login";
+                document.getElementById('reset-mode-button').style.display = 'block';
+            } else if (currentMode === "signup") {
                 document.getElementById('login-form').style.display = 'block';
                 document.getElementById('signup-form').style.display = 'none';
-                e.setAttribute('mode','login');
+                document.getElementById('reset-form').style.display = 'none';
+                document.getElementById('change-mode-button').setAttribute('mode','login');
                 document.getElementById('signup-login-title').innerHTML = 'Login';
-                e.innerHTML = "Don't have an account? Create one";
+                document.getElementById('change-mode-button').innerHTML = "Don't have an account? Create one";
+                document.getElementById('reset-mode-button').style.display = 'block';
+            } else if (currentMode === "reset") {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('signup-form').style.display = 'none';
+                document.getElementById('reset-form').style.display = 'none';
+                document.getElementById('change-mode-button').setAttribute('mode','login');
+                document.getElementById('signup-login-title').innerHTML = 'Login';
+                document.getElementById('change-mode-button').innerHTML = "Don't have an account? Create one";
+                document.getElementById('reset-mode-button').style.display = 'block';
             }
+            
+            // Clear messages
+            document.getElementById('info-error').style.display = 'none';
+            document.getElementById('info-success').style.display = 'none';
+        }
+
+        function reset_mode(e) {
+            document.getElementById('reset-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'none';
+            document.getElementById('change-mode-button').setAttribute('mode','reset');
+            document.getElementById('signup-login-title').innerHTML = 'Reset Password';
+            document.getElementById('change-mode-button').innerHTML = "Back to Login";
+            document.getElementById('reset-mode-button').style.display = 'none';
+            
+            // Clear messages
+            document.getElementById('info-error').style.display = 'none';
+            document.getElementById('info-success').style.display = 'none';
         }
 
         function showApp(username) {
@@ -379,9 +479,21 @@
             // Clear form fields and errors
             document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
-            document.getElementById('info-error').style.display = 'none';
+            document.getElementById('signup-username').value = '';
             document.getElementById('signup-email').value = '';
             document.getElementById('signup-password').value = '';
+            document.getElementById('reset-email').value = '';
+            document.getElementById('info-error').style.display = 'none';
+            document.getElementById('info-success').style.display = 'none';
+            
+            // Reset to login mode
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('signup-form').style.display = 'none';
+            document.getElementById('reset-form').style.display = 'none';
+            document.getElementById('change-mode-button').setAttribute('mode','login');
+            document.getElementById('signup-login-title').innerHTML = 'Login';
+            document.getElementById('change-mode-button').innerHTML = "Don't have an account? Create one";
+            document.getElementById('reset-mode-button').style.display = 'block';
         }
 
         // Diary database functions
@@ -521,7 +633,9 @@
         // Event listeners
         document.getElementById('login-form').addEventListener('submit', handleLogin);
         document.getElementById('signup-form').addEventListener('submit', handleSignUp);
+        document.getElementById('reset-form').addEventListener('submit', handlePasswordReset);
         document.getElementById('change-mode-button').addEventListener('click', change_mode);
+        document.getElementById('reset-mode-button').addEventListener('click', reset_mode);
         document.getElementById('logout-button').addEventListener('click', handleLogout);
 
         document.getElementById('add-diary-btn').addEventListener('click', addDiaryEntry);
