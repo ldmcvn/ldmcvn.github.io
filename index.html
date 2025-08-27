@@ -467,7 +467,14 @@
 
         function showDiary() {
             document.getElementById('home-section').style.display = 'none';
-            document.getElementById('diary-section').style.display = 'block';
+            document.getElementById('diary-section').style.display = 'block';            
+            if (localStorage.getItem("di") !== null){
+              var newone = document.getElementById('newone');
+            newone.value = localStorage.di;
+            }
+            document.getElementById('newone').style.height = 'auto';
+            document.getElementById('newone').style.height = (document.getElementById('newone').scrollHeight+70)+'px';
+            
             initDiaryListener();
         }
 
@@ -588,6 +595,7 @@
             if (!currentUser) return;
 
             const content = document.getElementById('newone').value.trim();
+            localStorage.setItem("di","");
             if (!content) return;
             
             const diaryEntry = {
@@ -627,7 +635,12 @@
         function writenewone() {
             const textarea = document.getElementById('newone');
             textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+            textarea.style.height = (textarea.scrollHeight+70) + 'px';
+            localStorage.setItem("di",textarea.value);
+        }
+        
+        function delayedwritenewone() {
+            window.setTimeout(writenewone, 0);
         }
 
         // Event listeners
@@ -642,7 +655,14 @@
         document.getElementById('menu-toggle').addEventListener('click', toggleSidebar);
         document.getElementById('diary-sidebar').addEventListener('click', showDiary);
 
-        document.getElementById('newone').addEventListener('input', writenewone);
+        // document.getElementById('newone').addEventListener('change', writenewone);
+        document.getElementById('newone').addEventListener('change', writenewone);
+        document.getElementById('newone').addEventListener('onfocus', writenewone);
+        document.getElementById('newone').addEventListener('cut',     delayedwritenewone);
+        document.getElementById('newone').addEventListener('paste',   delayedwritenewone);
+        document.getElementById('newone').addEventListener('drop',    delayedwritenewone);
+        document.getElementById('newone').addEventListener('keydown', delayedwritenewone);
+    
         document.getElementById('newone').addEventListener('keydown', function(e) {
             if (e.ctrlKey && e.key === 'Enter') {
                 addDiaryEntry();
